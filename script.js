@@ -10,15 +10,15 @@ let snake, direction, food;
 let score = 0;
 let gameEnded = false;
 let game;
-let startX = 0;
-let startY = 0;
+const directions = { left: 'LEFT', up: 'UP', right: 'RIGHT', down: 'DOWN' };
 
 function resizeCanvas() {
     const container = document.getElementById('container');
     if (!container) return;
 
     const availableWidth = container.clientWidth - 40;
-    canvasSize = Math.min(availableWidth, 400, Math.max(canvasSize, 200));
+    canvasSize = Math.min(availableWidth, 400);
+    canvasSize = Math.max(canvasSize, 200);
 
     canvas.width = canvasSize;
     canvas.height = canvasSize;
@@ -46,7 +46,6 @@ function generateFood() {
             y: Math.floor(Math.random() * (canvas.height / box)) * box
         };
     } while (collision(newFood, snake)); // Проверка на нахождение еды в теле змеи
-
     return newFood;
 }
 
@@ -57,29 +56,27 @@ function updateUI() {
 }
 
 canvas.addEventListener('touchstart', (e) => {
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-});
+    const touchX = e.touches[0].clientX;
+    const touchY = e.touches[0].clientY;
 
-canvas.addEventListener('touchend', (e) => {
-    if (gameEnded) return;
-    handleSwipe(e.changedTouches[0]);
-});
+    // Определяем направление в зависимости от положения касания
+    const canvasRect = canvas.getBoundingClientRect();
+    const relativeX = touchX - canvasRect.left;
+    const relativeY = touchY - canvasRect.top;
 
-function handleSwipe(touchEnd) {
-    const endX = touchEnd.clientX;
-    const endY = touchEnd.clientY;
-    const diffX = endX - startX;
-    const diffY = endY - startY;
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
 
-    if (Math.abs(diffX) > Math.abs(diffY)) {
-        direction = diffX > 0 && direction !== 'LEFT' ? 'RIGHT' : 
-                    diffX < 0 && direction !== 'RIGHT' ? 'LEFT' : direction;
+    if (relativeX < centerX && relativeY < centerY) {
+        direction = directions.up; // Верхний левый угол
+    } else if (relativeX >= centerX && relativeY < centerY) {
+        direction = directions.right; // Верхний правый угол
+    } else if (relativeX < centerX && relativeY >= centerY) {
+        direction = directions.left; // Нижний левый угол
     } else {
-        direction = diffY > 0 && direction !== 'UP' ? 'DOWN' : 
-                    diffY < 0 && direction !== 'DOWN' ? 'UP' : direction;
+        direction = directions.down; // Нижний правый угол
     }
-}
+});
 
 window.addEventListener('resize', () => {
     if (!gameEnded) initGame();
@@ -118,7 +115,7 @@ function draw() {
     }
 
     // Рисуем змею
-        snake.forEach((part, index) => {
+    snake .forEach((part, index) => {
         ctx.fillStyle = index === 0 ? 'green' : 'white'; // Змея: голова - зелёная, тело - белое
         ctx.fillRect(part.x, part.y, box, box);
         ctx.strokeStyle = 'black'; // Обводка
@@ -178,4 +175,3 @@ function restartGame() {
 document.addEventListener('DOMContentLoaded', () => {
     initGame();
 });
-
